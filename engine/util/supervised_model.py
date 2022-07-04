@@ -19,7 +19,7 @@ class ClassificationModels(Enum):
     xgboost = (3, XGBClassifier())
     k_nearest_neighbour = (4, KNeighborsClassifier(5))
     decision_tree = (5, DecisionTreeClassifier())
-    KNeighborsClassifier = (6,  RandomForestClassifier())
+    random_forest = (6,  RandomForestClassifier())
     adaptive_booster = (7, AdaBoostClassifier())
     support_vector = (8, SVC())
 
