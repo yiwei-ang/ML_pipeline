@@ -6,7 +6,7 @@ import pandas as pd
 
 df= pd.read_csv("tests\\data\\sample_winequality.csv")
 self = SupervisedModels(input_data=df)
-self.run_pipeline()
+result = self.run_pipeline()
 
 
 ```

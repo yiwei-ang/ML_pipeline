@@ -6,6 +6,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 from sklearn.model_selection import StratifiedKFold, cross_val_score, train_test_split
 
+import json
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -111,16 +112,27 @@ class SupervisedModels():
     def categorical_data(self):
         return self.input_data[self.input_data.select_dtypes('object').columns]
 
+    def _confusion_matrix(self, y_test, predictions):
+        unique_y = list(np.sort(np.unique(y_test)))
+        conf_matrix = pd.DataFrame(confusion_matrix(y_test, predictions),
+                                   columns=unique_y,
+                                   index=unique_y)
+        conf_matrix.index.name = 'Actual'
+        conf_matrix.columns.name = 'Predicted'
+        conf_matrix = conf_matrix.unstack().rename('value').reset_index()
+
+        return pd.Series([{"confusion_matrix": conf_matrix}]).to_json(orient='records')
+
     def model_fitting(self, x_train, x_test, y_train, y_test, model='random_forest'):
         selected_model = self.models[model].func
         selected_model.fit(x_train, y_train)
         predictions = selected_model.predict(x_test)
 
         score = accuracy_score(y_test, predictions)
-        matrix = confusion_matrix(y_test, predictions)
-        report = classification_report(y_test, predictions)
+        conf_matrix = self._confusion_matrix(y_test=y_test, predictions=predictions)
 
-        return score, matrix, report
+        return {"accuracy_score": score,
+                "confusion_matrix": json.loads(conf_matrix[1])[0]['confusion_matrix']}
 
     def run_pipeline(self):
         X_train, X_test, y_train, y_test = prepare_input_for_training(self.input_data)
