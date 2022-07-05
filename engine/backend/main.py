@@ -24,8 +24,8 @@ def home():
 
 
 @app.post("/")
-def get_image(file: InputData):
-    df = pd.read_csv(file)
+def get_outputs(file: InputData):
+    df = pd.DataFrame.from_dict(file.file)
     self = SupervisedModels(input_data=df)
     result = self.run_pipeline()
     return result

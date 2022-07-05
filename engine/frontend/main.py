@@ -19,27 +19,11 @@ st.markdown("This webapp allows users to train a supervised machine learning mod
 file = st.file_uploader("Choose an CSV File")
 
 # displays a button
-if st.button("Start train!"):
+if st.button("Train!"):
     if file:
-        json_data = {"file": pd.read_csv(file).to_json(orient='records')}
-        res = requests.post(f"http://0.0.0.0:8080/", json=json_data)
+        json_data = {"file": pd.read_csv(file).dropna().head(50).to_dict()}
+        res = requests.post(f"http://localhost:8080/", json=json_data)
         res_json = res.json()
-        df_output = pd.read_json(res_json)
 
-        st.text("Accuracy:", df_output.iloc[0])
-        st.dataframe(data=df_output)
-        #
-        # fig = plt.figure(figsize=(10, 4))
-        # plt.title('Frequency of tweets positive score')
-        # sns.histplot(df_sentiment, x='sentiment_score_positive', bins=[0, 0.2, 0.4, 0.6, 0.8, 1]);
-        # st.pyplot(fig)
-        #
-        # fig = plt.figure(figsize=(10, 4))
-        # plt.title('Frequency of tweets negative score')
-        # sns.histplot(df_sentiment, x='sentiment_score_negative', bins=[0, 0.2, 0.4, 0.6, 0.8, 1]);
-        # st.pyplot(fig)
-        #
-        # fig = plt.figure(figsize=(10, 4))
-        # plt.title('Frequency of tweets mixed score')
-        # sns.histplot(df_sentiment, x='sentiment_score_mixed', bins=[0, 0.2, 0.4, 0.6, 0.8, 1]);
-        # st.pyplot(fig)
+        st.text("Accuracy: " + str(res_json['accuracy_score']))
+        st.dataframe(data=pd.DataFrame.from_dict(res_json['confusion_matrix']))
