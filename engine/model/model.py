@@ -3,7 +3,7 @@ from engine.util.supervised_model import ClassificationModels, RegressionModels
 from scipy.stats import skew, boxcox
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import LabelEncoder
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 from sklearn.model_selection import StratifiedKFold, cross_val_score, train_test_split
 
 import math
@@ -15,7 +15,6 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 from typing import Dict
 
-
 MAPPING = {
     'classification': ClassificationModels,
     'regression': RegressionModels
@@ -23,7 +22,6 @@ MAPPING = {
 
 
 def standardize_input_for_training(df: pd.DataFrame):
-
     # Assumed the most right side is true value
     if 'y' not in [name.lower() for name in df.columns]:
         df['y'] = df[df.columns[-1]]
@@ -32,7 +30,6 @@ def standardize_input_for_training(df: pd.DataFrame):
 
 
 def apply_simple_imputer_and_encoding(df: pd.DataFrame, strategy='mean'):
-
     # create two DataFrames, one for each data type
     df_numeric, df_categorical = [df[df.select_dtypes(i).columns] for i in ['number', 'object']]
 
@@ -86,7 +83,8 @@ def correlation_matrix(df):
     top_corr = corr.loc[top_corr_cols, top_corr_cols]
     dropSelf = np.zeros_like(top_corr)
     dropSelf[np.triu_indices_from(dropSelf)] = True
-    return sns.heatmap(top_corr, cmap=sns.diverging_palette(220, 10, as_cmap=True), annot=True, fmt=".2f", mask=dropSelf, ax=ax)
+    return sns.heatmap(top_corr, cmap=sns.diverging_palette(220, 10, as_cmap=True), annot=True, fmt=".2f",
+                       mask=dropSelf, ax=ax)
 
 
 def choose_best_model(data: Dict, scoring='mean'):
@@ -114,6 +112,7 @@ class SupervisedModels():
         unique_y = list(np.sort(np.unique(np.concatenate((y_test, predictions), axis=None))))
         print(unique_y)
         print(confusion_matrix(y_test, predictions))
+        conf_matrix_raw = confusion_matrix(y_test, predictions)
         conf_matrix = pd.DataFrame(confusion_matrix(y_test, predictions),
                                    columns=unique_y,
                                    index=unique_y)
@@ -121,7 +120,7 @@ class SupervisedModels():
         conf_matrix.columns.name = 'Predicted'
         conf_matrix = conf_matrix.unstack().rename('value').reset_index()
 
-        return conf_matrix.to_dict(orient='records')
+        return conf_matrix.to_dict(orient='records'), conf_matrix_raw
 
     def model_fitting(self, x_train, x_test, y_train, y_test, model='random_forest'):
         selected_model = self.models[model].func
@@ -129,10 +128,21 @@ class SupervisedModels():
         predictions = selected_model.predict(x_test)
 
         score = accuracy_score(y_test, predictions)
+        recall = recall_score(y_test, predictions, average='weighted')
+        precision = precision_score(y_test, predictions, average='weighted')
+        f1_score_ = f1_score(y_test, predictions, average='weighted')
         conf_matrix = self._confusion_matrix(y_test=y_test, predictions=predictions)
 
-        return {"accuracy_score": score,
-                "confusion_matrix": conf_matrix}
+        output = {
+            "model_name": model,
+            "metrics": {
+                "accuracy_score": score,
+                "recall": recall,
+                "precision": precision,
+                "f1_score": f1_score_},
+            "confusion_matrix": conf_matrix[1]
+        }
+        return output
 
     def run_pipeline(self):
         X_train, X_test, y_train, y_test = prepare_input_for_training(self.input_data)

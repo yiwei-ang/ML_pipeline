@@ -2,11 +2,16 @@
 
 ```angular2html
 from engine.model.model import *
+from fastapi_csv import FastAPI_CSV
 import pandas as pd
 
-df= pd.read_csv("tests\\data\\sample_winequality.csv")
+file = "tests\\data\\sample_winequality.csv"
+df= pd.read_csv(file)
 self = SupervisedModels(input_data=df)
 result = self.run_pipeline()
+
+file = "tests\\data\\sample_winequality.csv"
+app = FastAPI_CSV(file)
 
 
 ```
@@ -24,8 +29,10 @@ streamlit run "C:\Users\User\PycharmProjects\ML_pipeline\engine\frontend\main.py
 # To-Do
 * Add more analysis to UI:
   * Feature importance
-  * AUC/ROC
-  * Model Type
+  * AUC/ROC curve
+  * Learning curve
+* Techdebt:
+  * Add make arguments for flexible based on problem (binary/classification)
 * Add more features:
   * Config before run
     * Model Type - optional
