@@ -17,7 +17,7 @@ app = FastAPI_CSV(file)
 ```
 
 # How to Run
-Run backend service: 
+Run backend service (ignore): 
 ```angular2html
 uvicorn engine.backend.main:app --host 0.0.0.0 --port 8080 --reload
 ```
@@ -25,6 +25,8 @@ Run frontend service:
 ```angular2html
 streamlit run "C:\Users\User\PycharmProjects\ML_pipeline\engine\frontend\main.py"
 ```
+
+![image](https://user-images.githubusercontent.com/66100446/177497797-8b2d18a4-2292-4b42-b1d2-1a578521bf34.png)
 
 # To-Do
 * Add more analysis to UI:
