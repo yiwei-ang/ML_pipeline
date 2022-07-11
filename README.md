@@ -26,17 +26,21 @@ wget https://github.com/yiwei-ang/ML_pipeline/blob/main/tests/data/sample_iris.c
 2. Access the UR,L and upload the dataset, then your result should be ready by seconds!
 
 # How to run locally
-1. Install the latest anaconda/miniconda from: https://www.anaconda.com/products/distribution
-2. Open the anaconda prompt/terminal that has `conda`, run the following to prepare a conda environment:
+1. Install `git`, and the latest anaconda/miniconda from: https://www.anaconda.com/products/distribution
+2. Clone repository:
 ```bash
-conda env create environment.yml
+git clone git@github.com:yiwei-ang/ML_pipeline.git
+```
+3. Open the anaconda prompt/terminal that has `conda`, run the following to prepare a conda environment:
+```bash
+conda env create -f environment.yml
 conda activate ml_pipeline
 ```
-3. Run the application:
+4. Run the application:
 ```bash
 streamlit run "C:\Users\User\PycharmProjects\ML_pipeline\engine\frontend\main.py"
 ```
-4. (Optional) To run a quick python test:
+5. (Optional) To run a quick python test:
 ```bash
 from engine.model.model import *
 import pandas as pd
