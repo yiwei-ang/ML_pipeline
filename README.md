@@ -13,8 +13,10 @@ The application is dockerized and deployed via AWS EC2 instance ( http://44.203.
 
 ## Requirement: 
 * `wget` command (optional to download sample dataset)
-* a CSV dataset with *label/target* on the **rightmost** column.
-
+* a CSV dataset with *label/target* on the **rightmost** column. example:
+  * | Feature1 | Feature2 | Label | 
+    | :---: | :---: | :---: |
+    | 1 | 2 | label1 |
 ## Steps
 1. Prepare a sample dataset, else you may use download the following dataset:
 ```angular2html
