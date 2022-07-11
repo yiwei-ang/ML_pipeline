@@ -6,8 +6,6 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 from sklearn.model_selection import StratifiedKFold, cross_val_score, train_test_split
 
-import math
-import json
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -26,6 +24,9 @@ def standardize_input_for_training(df: pd.DataFrame):
     if 'y' not in [name.lower() for name in df.columns]:
         df['y'] = df[df.columns[-1]]
 
+    # If label is not readable (not integer)
+    if df['y'].dtype.kind != 'i':
+        df['y'] = LabelEncoder().fit_transform(np.array(df[['y']]).ravel())
     return df
 
 
