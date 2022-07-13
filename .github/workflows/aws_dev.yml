@@ -33,7 +33,7 @@ on:
 
 env:
   AWS_REGION: us-east-1
-  ECR_REPOSITORY: ml_pipeline_dev
+  ECR_REPOSITORY: d2i9h0y1/ml_pipeline_dev
   ECS_SERVICE: ml-pipeline-service-dev
   ECS_CLUSTER: MLPipelineDEV
   ECS_TASK_DEFINITION: .aws/task-definition_dev.json
