@@ -20,14 +20,19 @@ MAPPING = {
 
 
 def standardize_input_for_training(df: pd.DataFrame):
-    # Assumed the most right side is true value
+    # Assumed the rightmost column is label/target
+    last_column = df.columns[-1]
     if 'y' not in [name.lower() for name in df.columns]:
         df['y'] = df[df.columns[-1]]
+        df.drop(columns=last_column, axis=1, inplace=True)
 
-    # If label is not readable (not integer)
+    # We need the column y (label/target) to be readable by numpy which is in integer.
+    label_mapping = {}
+    le = LabelEncoder()
     if df['y'].dtype.kind != 'i':
-        df['y'] = LabelEncoder().fit_transform(np.array(df[['y']]).ravel())
-    return df
+        df['y'] = le.fit_transform(np.array(df[['y']]).ravel())
+        label_mapping = dict(zip(le.classes_, range(len(le.classes_))))
+    return df, list(df.columns[:-1]), last_column, label_mapping
 
 
 def apply_simple_imputer_and_encoding(df: pd.DataFrame, strategy='mean'):
@@ -39,7 +44,8 @@ def apply_simple_imputer_and_encoding(df: pd.DataFrame, strategy='mean'):
     df_numeric = pd.DataFrame(imp.fit_transform(df_numeric), columns=df_numeric.columns)
 
     # Label Encoder for categorical data
-    df_categorical = pd.DataFrame(LabelEncoder().fit_transform(df_categorical), columns=df_categorical.columns)
+    if len(df_categorical.columns) > 0:
+        df_categorical = pd.DataFrame(LabelEncoder().fit_transform(df_categorical), columns=df_categorical.columns)
 
     df = pd.concat([df_numeric, df_categorical], axis=1)
 
@@ -66,7 +72,6 @@ def apply_boxcox_transformation(df: pd.DataFrame, threshold=0.7):
 
 
 def prepare_input_for_training(df: pd.DataFrame, test_size=0.2):
-    df = standardize_input_for_training(df)
     df = apply_simple_imputer_and_encoding(df)
     df = apply_boxcox_transformation(df)[0]
 
@@ -96,18 +101,10 @@ def choose_best_model(data: Dict, scoring='mean'):
 
 class SupervisedModels():
     def __init__(self, input_data, problem_type='classification', evaluation_metric='accuracy'):
-        self.input_data = input_data
+        self.input_data, self.features, self.label, self.label_mapping = standardize_input_for_training(input_data)
         self.problem_type = problem_type
         self.models = MAPPING.get(self.problem_type)
         self.evaluation_metric = evaluation_metric
-
-    @property
-    def numerical_data(self):
-        return self.input_data[self.input_data.select_dtypes('number').columns]
-
-    @property
-    def categorical_data(self):
-        return self.input_data[self.input_data.select_dtypes('object').columns]
 
     def _confusion_matrix(self, y_test, predictions):
         unique_y = list(np.sort(np.unique(np.concatenate((y_test, predictions), axis=None))))
@@ -123,7 +120,7 @@ class SupervisedModels():
 
         return conf_matrix.to_dict(orient='records'), conf_matrix_raw
 
-    def model_fitting(self, x_train, x_test, y_train, y_test, model='random_forest'):
+    def model_fitting(self, x_train, x_test, y_train, y_test, results_k_fold, model='random_forest'):
         selected_model = self.models[model].func
         selected_model.fit(x_train, y_train)
         predictions = selected_model.predict(x_test)
@@ -136,28 +133,31 @@ class SupervisedModels():
 
         output = {
             "model_name": model,
+            "features": self.features,
+            "labels": self.label,
+            "label_mapping": list(self.label_mapping.keys()),
             "metrics": {
                 "accuracy_score": score,
                 "recall": recall,
                 "precision": precision,
                 "f1_score": f1_score_},
-            "confusion_matrix": conf_matrix[1]
+            "confusion_matrix": conf_matrix[1],
+            "results_k_fold": results_k_fold
         }
         return output
 
     def run_pipeline(self):
         X_train, X_test, y_train, y_test = prepare_input_for_training(self.input_data)
         models = list(self.models.__members__.keys())
+        summary_k_fold = []
         results_k_fold = []
         for model in models:
             k_fold = StratifiedKFold(n_splits=5)
             cv_results = cross_val_score(self.models[model].func, X_train, y_train, cv=k_fold, scoring='accuracy')
-            results_k_fold.append({'model_name': model, 'mean': cv_results.mean(), 'std': cv_results.std()})
-        print(results_k_fold)
+            results_k_fold.append({'model_name': model, 'cv_values': list(cv_results)})
+            summary_k_fold.append({'model_name': model, 'mean': cv_results.mean(), 'std': cv_results.std()})
 
         # Use the best model to provide analysis to the users.
-        best_model = choose_best_model(results_k_fold)
-        print(best_model)
-        print(self.model_fitting(X_train, X_test, y_train, y_test, model=best_model))
+        best_model = choose_best_model(summary_k_fold)
 
-        return self.model_fitting(X_train, X_test, y_train, y_test, model=best_model)
+        return self.model_fitting(X_train, X_test, y_train, y_test, model=best_model, results_k_fold=results_k_fold)

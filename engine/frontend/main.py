@@ -45,6 +45,15 @@ if st.button("Train!"):
             # Inject CSS with Markdown
             st.markdown(hide_dataframe_row_index, unsafe_allow_html=True)
 
+            st.header("K-Fold Validation BoxPlot Across Different Models", anchor=None)
+            fig = plt.figure(figsize=(10, 4))
+            plt.title('Algorithm Comparison')
+            results_k_fold = pd.DataFrame(res_json['results_k_fold'])
+            results_k_fold = results_k_fold.explode('cv_values')
+            sns.set_theme(style="whitegrid")
+            sns.boxplot(x='model_name', y='cv_values', data=results_k_fold, palette="Set3")
+            st.pyplot(fig)
+
             st.header("Best Fitted Model on Training", anchor=None)
             st.text(res_json['model_name'])
 
@@ -55,5 +64,5 @@ if st.button("Train!"):
             st.header("Confusion Matrix", anchor=None)
             fig = plt.figure(figsize=(10, 4))
             plt.title('Confusion Matrix')
-            sns.heatmap(res_json['confusion_matrix'] / np.sum(res_json['confusion_matrix']), annot=True, fmt='.2%', cmap='Blues')
+            sns.heatmap(res_json['confusion_matrix'], xticklabels=res_json['labels'], yticklabels=res_json['labels'], annot=True, cmap='Blues')
             st.pyplot(fig)
