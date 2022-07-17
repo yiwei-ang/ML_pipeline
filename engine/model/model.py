@@ -75,6 +75,7 @@ def prepare_input_for_training(df: pd.DataFrame, test_size=0.2):
     df = apply_simple_imputer_and_encoding(df)
     df = apply_boxcox_transformation(df)[0]
 
+    # ToDo: We do not necessarily have y column, we can make rightmost column name as variable which can be used by other functions.
     x = df[[i for i in df.columns if i not in ['y']]]
     y = df['y']
 
@@ -106,7 +107,7 @@ class SupervisedModels():
         self.models = MAPPING.get(self.problem_type)
         self.evaluation_metric = evaluation_metric
 
-    def _confusion_matrix(self, y_test, predictions):
+    def process_confusion_matrix(self, y_test, predictions):
         unique_y = list(np.sort(np.unique(np.concatenate((y_test, predictions), axis=None))))
         print(unique_y)
         print(confusion_matrix(y_test, predictions))
@@ -124,13 +125,37 @@ class SupervisedModels():
         selected_model = self.models[model].func
         selected_model.fit(x_train, y_train)
         predictions = selected_model.predict(x_test)
+        # ToDo: Make a classification report processing instead of overall metrics
+        # def classifcation_report_processing(model_to_report):
+        #     tmp = list()
+        #     for row in model_to_report.split("\n"):
+        #         parsed_row = [x for x in row.split("  ") if len(x) > 0]
+        #         if len(parsed_row) > 0:
+        #             tmp.append(parsed_row)
+        #
+        #     # Store in dictionary
+        #     measures = tmp[0]
+        #
+        #     D_class_data = defaultdict(dict)
+        #     for row in tmp[1:]:
+        #         class_label = row[0]
+        #         for j, m in enumerate(measures):
+        #             D_class_data[class_label][m.strip()] = float(row[j + 1].strip())
+        #     save_report = pd.DataFrame.from_dict(D_class_data).T
+        #     path_to_save = os.getcwd() + '/Classification_report.xlsx'
+        #     save_report.to_excel(path_to_save, index=True)
+        #     return save_report.head(5)
 
         score = accuracy_score(y_test, predictions)
         recall = recall_score(y_test, predictions, average='weighted')
         precision = precision_score(y_test, predictions, average='weighted')
         f1_score_ = f1_score(y_test, predictions, average='weighted')
-        conf_matrix = self._confusion_matrix(y_test=y_test, predictions=predictions)
+        conf_matrix = self.process_confusion_matrix(y_test=y_test, predictions=predictions)
 
+        # ToDo: Make feature importance chart.
+        # ToDo: Create iteration plot, something like training loss/accuracy over epoch.
+
+        # ToDo: Make output specific format depending on classification/regression problem. Currently it's for classification.
         output = {
             "model_name": model,
             "features": self.features,
@@ -152,6 +177,7 @@ class SupervisedModels():
         summary_k_fold = []
         results_k_fold = []
         for model in models:
+            # ToDo: Make n_splits configurable by user, add validation for n_splits.
             k_fold = StratifiedKFold(n_splits=5)
             cv_results = cross_val_score(self.models[model].func, X_train, y_train, cv=k_fold, scoring='accuracy')
             results_k_fold.append({'model_name': model, 'cv_values': list(cv_results)})

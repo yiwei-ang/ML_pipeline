@@ -22,6 +22,13 @@ st.markdown("This webapp allows users to train a supervised machine learning mod
 # displays a file uploader widget
 file = st.file_uploader("Choose an CSV File")
 
+# ToDo: Add configurable page after csv is uploaded and parse them into model as argument.
+# ToDo: Add some widgets on running button.
+# ToDo: Print some readable logs to let users understand clearly what the program is currently doing for them.
+# ToDo: Add some tabs for different purposes - model, input, results.
+# ToDo: Add Download widget for user to download results - pickle/csv/json.
+# ToDo: Add an easy mutable field (maybe JSON) that user can insert a set of features values that trained model can compute.
+
 # displays a button
 if st.button("Train!"):
     if file:
